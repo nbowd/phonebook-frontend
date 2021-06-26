@@ -1,21 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+// import axios from 'axios'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import personService from './services/person'
+
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456' },
-    { name: 'Ada Lovelace', number: '39-44-5323523' },
-    { name: 'Dan Abramov', number: '12-43-234345' },
-    { name: 'Mary Poppendieck', number: '39-23-6423122' }
-  ])
+  const [persons, setPersons] = useState([])
 
   // Holds the current state of an input, updated with each keystroke
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [ newSearch, setNewSearch ] = useState('')
   const [showAll, setShowAll] = useState(true)  // false if any characters in newSearch
+  const [filteredPersons, setFilteredPerson] = useState(null)
 
   // used to updated inputs
   const handleNameChange = (event) => {
@@ -37,16 +36,35 @@ const App = () => {
   }
 
   // On form submit, stop refresh, create new object and check for duplicates
-  const handlePersonsChange = (event) => {
+  const handlePersonsAdd = (event) => {
     event.preventDefault()
+    const pid = () => {
+      if (persons.length === 0) {return 1}
+      return persons[persons.length-1].id +1
+    }
     const personObject = {
       name: newName,
       number: newNumber,
+      id: pid(),
 
     }
     checkDuplicateName(personObject)
+    addPerson(personObject)
     setNewName('')  // Clears inputs
     setNewNumber('')
+  }
+
+  const handlePersonsDelete = (singlePerson) => {
+  
+    if (window.confirm(`Delete ${singlePerson.name}?`)) {
+      personService
+        .deletePerson(singlePerson.id)
+        .then(() => {
+          const filteredPersons = persons.filter(person => person.id !== singlePerson.id)
+          setPersons(filteredPersons)
+        })
+    }
+   
   }
   
   // Checks current names in phonebook, alerting the user if they are trying to add a duplicate name
@@ -57,9 +75,24 @@ const App = () => {
         return
       }
     }
-    setPersons(persons.concat(personInfo))  // concat returns new object
-
   }
+
+  const addPerson = personInfo => {
+    setPersons(persons.concat(personInfo))  // concat returns new object
+    personService
+      .create(personInfo)
+      .then(returnedPerson => setPersons(persons.concat(returnedPerson)))
+  }
+
+  useEffect(() => {
+    console.log('effect')
+    personService
+      .getAll()
+      .then(initialPersons => {
+        setPersons(persons.concat(initialPersons))
+      })
+// eslint-disable-next-line
+  }, [])
 
   return (
     <div>
@@ -70,7 +103,7 @@ const App = () => {
       <h2>Add New</h2>
 
       <PersonForm
-        handlePersonsChange={handlePersonsChange}
+        handlePersonsAdd={handlePersonsAdd}
         newName={newName}
         newNumber={newNumber}
         handleNameChange={handleNameChange}
@@ -79,7 +112,12 @@ const App = () => {
 
       <h2>Numbers</h2>
       
-      <Persons showAll={showAll} persons={persons} newSearch={newSearch}/>
+      <Persons 
+        showAll={showAll} 
+        persons={persons}
+        handlePersonDelete={handlePersonsDelete} 
+        newSearch={newSearch}
+      />
     </div>
   )
 }
