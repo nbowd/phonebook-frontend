@@ -48,18 +48,19 @@ const App = () => {
       id: pid(),
 
     }
-    checkDuplicateName(personObject)
+    if (checkDuplicateName(personObject)) {return}
     addPerson(personObject)
     setNewName('')  // Clears inputs
     setNewNumber('')
   }
 
   const handlePersonsDelete = (singlePerson) => {
-  
+    console.log(singlePerson);
     if (window.confirm(`Delete ${singlePerson.name}?`)) {
       personService
         .deletePerson(singlePerson.id)
         .then(() => {
+          console.log(persons);
           const filteredPersons = persons.filter(person => person.id !== singlePerson.id)
           setPersons(filteredPersons)
         })
@@ -67,14 +68,32 @@ const App = () => {
    
   }
   
+  const updatePerson = (personInfo, oldId) => {
+    personService
+      .update(personInfo, oldId)
+      .then(() => {
+        const updatedPpl = persons.map(person => {
+          if (person.name === personInfo.name) {
+            return {...personInfo, id:person.id}
+          }
+          return person
+        })
+        setPersons(updatedPpl)
+        setNewName('')
+        setNewNumber('')
+      })
+  }
   // Checks current names in phonebook, alerting the user if they are trying to add a duplicate name
   const checkDuplicateName = (personInfo) => {
     for (let i in persons) {
       if (personInfo.name.toLowerCase() === persons[i].name.toLowerCase()) {
-        window.alert(`${newName} is already added to phonebook`)
-        return
+        if(window.confirm(`${newName} is already added to phonebook, update number?`)) {
+          updatePerson(personInfo, persons[i].id)
+        }
+        return true
       }
     }
+    return false
   }
 
   const addPerson = personInfo => {
@@ -85,7 +104,6 @@ const App = () => {
   }
 
   useEffect(() => {
-    console.log('effect')
     personService
       .getAll()
       .then(initialPersons => {

@@ -12,9 +12,14 @@ const create = newPerson => {
 }
 
 const deletePerson = personId => {
+  console.log(personId);
   const request = axios.delete(`${baseUrl}/${personId}`)
   const test = request.then(response => response.data)
   return test
 }
 
-export default {getAll, create, deletePerson}
+const update = (updatedPerson, pid) => {
+  const request = axios.put(`${baseUrl}/${pid}`, updatedPerson)
+  return request.then(response => response.data)
+}
+export default {getAll, create, deletePerson, update}
