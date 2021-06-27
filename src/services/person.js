@@ -22,4 +22,5 @@ const update = (updatedPerson, pid) => {
   const request = axios.put(`${baseUrl}/${pid}`, updatedPerson)
   return request.then(response => response.data)
 }
-export default {getAll, create, deletePerson, update}
+const personService = {getAll, create, deletePerson, update}
+export default personService
